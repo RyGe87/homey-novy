@@ -14,7 +14,10 @@ class HoodFanDevice extends Homey.Device {
     const { address, localName } = this.getStore();
     this.hood = this.homey.app.getHood({ uuid: id, address, localName });
     this.hood.skipRunOut = Boolean(this.getSetting('skip_run_out'));
+    this.hood.startMinimum = Boolean(this.getSetting('start_minimum'));
     this._lastRunOutCancel = 0;
+    this._lastMinimumEnforce = 0;
+    this._lastFanState = undefined;
 
     this._onState = state => this._syncState(state);
     this._onAvailable = available => {
@@ -66,6 +69,19 @@ class HoodFanDevice extends Homey.Device {
       this.log('Run-out detected — turning hood off immediately (setting)');
       this.hood.turnAllOff().catch(this.error);
     }
+    // "Start altijd op laagste stand": the hood natively restores its
+    // last-used speed on power-on — knock it down unless the turn-on came
+    // from an explicit speed command.
+    if (this.hood.startMinimum && this._lastFanState === false && state.fanState
+      && (state.fanSpeed || 0) > 25 && !state.boost
+      && Date.now() - this.hood.lastExplicitFanAt > 8000
+      && Date.now() - this._lastMinimumEnforce > 10000) {
+      this._lastMinimumEnforce = Date.now();
+      this.log('Fan restored at higher speed — enforcing minimum (setting)');
+      this.hood.setFanSpeed(25).catch(this.error);
+    }
+    if (state.fanState !== undefined) this._lastFanState = state.fanState;
+
     set('onoff', state.fanState);
     if (state.fanSpeed !== undefined && state.fanSpeed > 0) {
       set('dim', state.fanSpeed / 100);
@@ -80,6 +96,9 @@ class HoodFanDevice extends Homey.Device {
   async onSettings({ newSettings, changedKeys }) {
     if (changedKeys.includes('skip_run_out')) {
       this.hood.skipRunOut = Boolean(newSettings.skip_run_out);
+    }
+    if (changedKeys.includes('start_minimum')) {
+      this.hood.startMinimum = Boolean(newSettings.start_minimum);
     }
   }
 

@@ -73,7 +73,8 @@ class NovyApp extends Homey.App {
             case 'intouch_light':
               if (Boolean(s.lightState) === snap.light) {
                 action = 'filling gap: toggle light';
-                await hood.setLight(!snap.light);
+                if (!snap.light && hood.lightWarmFull) await hood.setLightWarmFull();
+                else await hood.setLight(!snap.light);
               }
               break;
             case 'intouch_onoff':
@@ -85,6 +86,7 @@ class NovyApp extends Homey.App {
               } else if (Boolean(s.fanState) === snap.fan && Boolean(s.lightState) === snap.light) {
                 action = 'filling gap: power toggle';
                 await hood.pressPower();
+                if (hood.startMinimum && !snap.fan) await hood.setFanSpeed(25);
               }
               break;
             case 'intouch_increase':

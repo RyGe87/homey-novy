@@ -13,6 +13,9 @@ class HoodLightDevice extends Homey.Device {
     const { id } = this.getData();
     const { address, localName } = this.getStore();
     this.hood = this.homey.app.getHood({ uuid: id, address, localName });
+    this.hood.lightWarmFull = Boolean(this.getSetting('light_warm_full'));
+    this._lastWarmFullEnforce = 0;
+    this._lastLightState = undefined;
 
     this._onState = state => this._syncState(state);
     this._onAvailable = available => {
@@ -45,6 +48,11 @@ class HoodLightDevice extends Homey.Device {
           // Homey: 0 = coolest, 1 = warmest. Hood raw: 0 = 6500K, 255 = 2700K.
           opts.colortemp = values.light_temperature * 255;
         }
+        // Plain "on" with the house rule active: warmest colour, full power.
+        if (this.hood.lightWarmFull && opts.brightness === undefined && opts.colortemp === undefined) {
+          await this.hood.setLightWarmFull();
+          return;
+        }
         await this.hood.setLight(true, opts);
       },
       500,
@@ -57,6 +65,18 @@ class HoodLightDevice extends Homey.Device {
         this.setCapabilityValue(cap, value).catch(this.error);
       }
     };
+    // "Licht altijd warm op vol vermogen": correct a native light-on that
+    // restored something else, unless an explicit choice was just made.
+    if (this.hood.lightWarmFull && this._lastLightState === false && state.lightState
+      && ((state.brightness || 0) < 250 || (state.colortemp || 0) < 250)
+      && Date.now() - this.hood.lastExplicitLightAt > 8000
+      && Date.now() - this._lastWarmFullEnforce > 10000) {
+      this._lastWarmFullEnforce = Date.now();
+      this.log('Light restored differently — enforcing warm/full (setting)');
+      this.hood.setLightWarmFull().catch(this.error);
+    }
+    if (state.lightState !== undefined) this._lastLightState = state.lightState;
+
     set('onoff', state.lightState);
     if (state.brightness !== undefined && state.brightness > 0) {
       set('dim', state.brightness / 255);
@@ -66,6 +86,12 @@ class HoodLightDevice extends Homey.Device {
     }
     if (state.ledOperatingMinutes !== undefined) {
       set('measure_led_hours', Math.round(state.ledOperatingMinutes / 60));
+    }
+  }
+
+  async onSettings({ newSettings, changedKeys }) {
+    if (changedKeys.includes('light_warm_full')) {
+      this.hood.lightWarmFull = Boolean(newSettings.light_warm_full);
     }
   }
 

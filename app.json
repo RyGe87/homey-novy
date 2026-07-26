@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -389,6 +389,19 @@
             "en": "The hood normally keeps running for 30 minutes after switching off, to clear remaining fumes. With this setting enabled, a detected run-out is cut short and the hood turns off right away.",
             "nl": "De kap draait na het uitschakelen normaal 30 minuten na om resterende dampen af te voeren. Met deze instelling wordt een gedetecteerde naloop meteen afgebroken en gaat de kap direct uit."
           }
+        },
+        {
+          "id": "start_minimum",
+          "type": "checkbox",
+          "value": false,
+          "label": {
+            "en": "Always start at minimum speed",
+            "nl": "Start altijd op laagste stand"
+          },
+          "hint": {
+            "en": "The hood normally restores its last-used speed when switched on. With this setting enabled it always starts at the lowest speed instead. Explicitly choosing a speed (slider, flow) is always respected.",
+            "nl": "De kap herstelt bij het aanzetten normaal de laatst gebruikte snelheid. Met deze instelling start ze altijd op de laagste stand. Een expliciet gekozen snelheid (schuif, flow) wordt altijd gerespecteerd."
+          }
         }
       ],
       "images": {
@@ -419,6 +432,21 @@
       "capabilities": ["onoff", "dim", "light_temperature", "measure_led_hours"],
       "connectivity": ["ble"],
       "platforms": ["local"],
+      "settings": [
+        {
+          "id": "light_warm_full",
+          "type": "checkbox",
+          "value": false,
+          "label": {
+            "en": "Always turn on warm at full brightness",
+            "nl": "Licht altijd warm op vol vermogen"
+          },
+          "hint": {
+            "en": "When the light is turned on, always use the warmest colour at full brightness instead of the last-used setting. Explicitly choosing brightness or colour (slider, flow) is always respected.",
+            "nl": "Bij het inschakelen van het licht altijd de warmste kleur op vol vermogen gebruiken in plaats van de laatst gebruikte stand. Een expliciet gekozen helderheid of kleur (schuif, flow) wordt altijd gerespecteerd."
+          }
+        }
+      ],
       "images": {
         "small": "/drivers/hood-light/assets/images/small.png",
         "large": "/drivers/hood-light/assets/images/large.png"
