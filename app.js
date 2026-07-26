@@ -46,6 +46,65 @@ class NovyApp extends Homey.App {
     this.log('Novy BLE app started');
   }
 
+  /** Gap-filler bridge: the hood misses a large share of the hob's RF
+   *  frames. After a hob button press, wait briefly, re-read the hood state
+   *  over BLE, and only when the hood clearly did NOT act on the press,
+   *  perform the equivalent command. This keeps native behaviour when the
+   *  RF does arrive and rules out double execution by construction. */
+  _bridgeInTouch(card, address) {
+    if (address !== HOB_ADDRESS) return;
+    const BRIDGE_CHECK_MS = 1800;
+    const SPEED_STEP = 25;
+
+    for (const { hood } of this._hoods.values()) {
+      const snap = {
+        light: Boolean(hood.state.lightState),
+        fan: Boolean(hood.state.fanState),
+        speed: hood.state.fanSpeed || 0,
+      };
+      setTimeout(async () => {
+        try {
+          await hood.refreshStatus();
+          const s = hood.state;
+          let action = 'hood handled it natively';
+          switch (card) {
+            case 'intouch_light':
+              if (Boolean(s.lightState) === snap.light) {
+                action = 'filling gap: toggle light';
+                await hood.setLight(!snap.light);
+              }
+              break;
+            case 'intouch_onoff':
+              if (Boolean(s.fanState) === snap.fan && Boolean(s.lightState) === snap.light) {
+                action = 'filling gap: power toggle';
+                await hood.pressPower();
+              }
+              break;
+            case 'intouch_increase':
+              if ((s.fanSpeed || 0) === snap.speed) {
+                action = 'filling gap: speed up';
+                await hood.setFanSpeed(Math.min(100, snap.speed + SPEED_STEP));
+              }
+              break;
+            case 'intouch_decrease':
+              if ((s.fanSpeed || 0) === snap.speed) {
+                const target = snap.speed - SPEED_STEP;
+                action = 'filling gap: speed down';
+                if (target <= 0) await hood.setFanState(false);
+                else await hood.setFanSpeed(target);
+              }
+              break;
+            default:
+              return;
+          }
+          this.log(`InTouch bridge (${card}): ${action}`);
+        } catch (err) {
+          this.error(`InTouch bridge failed: ${err}`);
+        }
+      }, BRIDGE_CHECK_MS);
+    }
+  }
+
   /** Transmit an InTouch frame, acting as a (replacement) remote control.
    *  During the hood's 3-minute learning mode (after a power-cycle) the hood
    *  adopts the address of the first InTouch frame it hears. */
@@ -131,6 +190,7 @@ class NovyApp extends Homey.App {
           const address = code.slice(0, code.length - result.unitLength);
           this.log(`InTouch RX: code=${code} (address=${address}) -> ${result.card}`);
           this.homey.flow.getTriggerCard(result.card).trigger({ address }).catch(this.error);
+          this._bridgeInTouch(result.card, address);
           return;
         }
 

@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
