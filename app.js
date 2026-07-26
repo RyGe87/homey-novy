@@ -13,6 +13,16 @@ class NovyApp extends Homey.App {
 
   async onInit() {
     this._hoods = new Map(); // peripheral uuid -> { hood, refs }
+
+    this.homey.flow.getActionCard('press_power')
+      .registerRunListener(async ({ device }) => { await device.hood.pressPower(); });
+    this.homey.flow.getActionCard('start_boost')
+      .registerRunListener(async ({ device }) => { await device.hood.boost(); });
+    this.homey.flow.getActionCard('start_run_out')
+      .registerRunListener(async ({ device }) => { await device.hood.runOut(); });
+    this.homey.flow.getConditionCard('grease_dirty')
+      .registerRunListener(async ({ device }) => Boolean(device.hood.state.greaseDirty));
+
     this.log('Novy BLE app started');
   }
 

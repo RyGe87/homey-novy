@@ -44,6 +44,12 @@ class HoodFanDevice extends Homey.Device {
         this.setCapabilityValue(cap, value).catch(this.error);
       }
     };
+    if (state.greaseDirty === true && this._lastGreaseDirty === false) {
+      this.homey.flow.getDeviceTriggerCard('grease_dirty_true')
+        .trigger(this)
+        .catch(this.error);
+    }
+    if (state.greaseDirty !== undefined) this._lastGreaseDirty = state.greaseDirty;
     set('onoff', state.fanState);
     if (state.fanSpeed !== undefined && state.fanSpeed > 0) {
       set('dim', state.fanSpeed / 100);

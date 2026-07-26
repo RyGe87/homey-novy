@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -25,6 +25,92 @@
     "email": "rymenants.geert@me.com"
   },
   "source": "https://github.com/bwynants/hass-purelinepro",
+  "flow": {
+    "triggers": [
+      {
+        "id": "grease_dirty_true",
+        "title": {
+          "en": "The grease filter needs cleaning",
+          "nl": "Het vetfilter moet gereinigd worden"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=hood-fan"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "grease_dirty",
+        "title": {
+          "en": "Grease filter !{{is|isn't}} dirty",
+          "nl": "Vetfilter !{{is|is niet}} vuil"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=hood-fan"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "press_power",
+        "title": {
+          "en": "Press the power button",
+          "nl": "Druk op de power-toets"
+        },
+        "hint": {
+          "en": "Same as the power button on the remote: toggles the hood.",
+          "nl": "Zoals de power-toets op de afstandsbediening: schakelt de kap om."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=hood-fan"
+          }
+        ]
+      },
+      {
+        "id": "start_boost",
+        "title": {
+          "en": "Start boost (full speed)",
+          "nl": "Start boost (volle kracht)"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=hood-fan"
+          }
+        ]
+      },
+      {
+        "id": "start_run_out",
+        "title": {
+          "en": "Start run-out mode",
+          "nl": "Start de uitloopstand"
+        },
+        "hint": {
+          "en": "Dims the light to ambient, lowers the fan to its switch-off speed and turns it off after 5 minutes (30 in recirculation mode).",
+          "nl": "Dimt het licht naar sfeerstand, verlaagt de ventilator naar de uitloopsnelheid en schakelt na 5 minuten uit (30 in recirculatiestand)."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=hood-fan"
+          }
+        ]
+      }
+    ]
+  },
   "capabilities": {
     "recirculation": {
       "type": "boolean",
