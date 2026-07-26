@@ -65,4 +65,7 @@ or endorsed by Novy.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Because the protocol implementation derives from Bert
+Wynants' MIT-licensed work, his copyright and permission notice is reproduced
+in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md); keep that file with any
+copy you distribute.

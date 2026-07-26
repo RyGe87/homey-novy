@@ -1,6 +1,21 @@
+# Third-party notices
+
+The BLE protocol implemented by this app was reverse-engineered by **Bert
+Wynants** and is ported here from his Home Assistant integration
+[bwynants/hass-purelinepro](https://github.com/bwynants/hass-purelinepro) and
+his ESPHome component
+[bwynants/purelinepro](https://github.com/bwynants/purelinepro). The protocol
+itself is documented in [PROTOCOL.md](PROTOCOL.md).
+
+Both projects are MIT licensed, which requires their copyright and permission
+notice to travel with any derived work. That notice is reproduced in full
+below.
+
+---
+
 MIT License
 
-Copyright (c) 2026 Geert Rymenants
+Copyright (c) 2026 bwynants
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
