@@ -23,7 +23,59 @@ class NovyApp extends Homey.App {
     this.homey.flow.getConditionCard('grease_dirty')
       .registerRunListener(async ({ device }) => Boolean(device.hood.state.greaseDirty));
 
+    await this._startInTouchReceiver();
+
     this.log('Novy BLE app started');
+  }
+
+  /** Listen for Novy InTouch 433 MHz frames (hob buttons / remote control) and
+   *  turn them into flow triggers. Frame layout, decoded by the community
+   *  Intouch apps: 10 address bits + a 2-bit or 8-bit button code. */
+  async _startInTouchReceiver() {
+    // A button press transmits the frame ~20 times; collapse the burst.
+    const DEBOUNCE_MS = 750;
+    const UNIT_TO_CARD = {
+      '11010001': 'intouch_light',
+      '11010011': 'intouch_onoff',
+      '01': 'intouch_increase',
+      '10': 'intouch_decrease',
+    };
+
+    try {
+      this._intouchSignal = this.homey.rf.getSignal433('intouch');
+      await this._intouchSignal.enableRX();
+    } catch (err) {
+      this.error(`InTouch 433 MHz receiver unavailable: ${err}`);
+      return;
+    }
+
+    let lastCode = null;
+    let lastAt = 0;
+    this._intouchSignal.on('payload', payload => {
+      try {
+        const code = Array.from(payload).join('');
+        const now = Date.now();
+        if (code === lastCode && now - lastAt < DEBOUNCE_MS) {
+          lastAt = now;
+          return;
+        }
+        lastCode = code;
+        lastAt = now;
+
+        const address = code.slice(0, 10);
+        const unit = code.slice(10);
+        const card = UNIT_TO_CARD[unit];
+        this.log(`InTouch RX: code=${code} (address=${address}, unit=${unit}) -> ${card || 'unknown'}`);
+        if (card) {
+          this.homey.flow.getTriggerCard(card).trigger({ address }).catch(this.error);
+        } else {
+          this.homey.flow.getTriggerCard('intouch_unknown').trigger({ code }).catch(this.error);
+        }
+      } catch (err) {
+        this.error(`InTouch RX handling failed: ${err}`);
+      }
+    });
+    this.log('InTouch 433 MHz receiver enabled');
   }
 
   getHood({ uuid, address, localName }) {

@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -13,7 +13,24 @@
     "nl": "Bedien je Novy Cloud- of Pureline Pro-dampkap via Bluetooth"
   },
   "category": ["climate"],
-  "permissions": ["homey:wireless:ble"],
+  "permissions": ["homey:wireless:ble", "homey:wireless:433"],
+  "signals": {
+    "433": {
+      "intouch": {
+        "sof": [336],
+        "eof": [],
+        "words": [
+          [401, 711],
+          [755, 357]
+        ],
+        "interval": 10000,
+        "sensitivity": 0.5,
+        "repetitions": 20,
+        "minimalLength": 12,
+        "maximalLength": 18
+      }
+    }
+  },
   "brandColor": "#1c1c1c",
   "images": {
     "small": "/assets/images/small.png",
@@ -27,6 +44,91 @@
   "source": "https://github.com/bwynants/hass-purelinepro",
   "flow": {
     "triggers": [
+      {
+        "id": "intouch_light",
+        "title": {
+          "en": "InTouch light button received",
+          "nl": "InTouch licht-knop ontvangen"
+        },
+        "tokens": [
+          {
+            "name": "address",
+            "type": "string",
+            "title": {
+              "en": "Address",
+              "nl": "Adres"
+            }
+          }
+        ]
+      },
+      {
+        "id": "intouch_onoff",
+        "title": {
+          "en": "InTouch on/off button received",
+          "nl": "InTouch aan/uit-knop ontvangen"
+        },
+        "tokens": [
+          {
+            "name": "address",
+            "type": "string",
+            "title": {
+              "en": "Address",
+              "nl": "Adres"
+            }
+          }
+        ]
+      },
+      {
+        "id": "intouch_increase",
+        "title": {
+          "en": "InTouch speed up button received",
+          "nl": "InTouch harder-knop ontvangen"
+        },
+        "tokens": [
+          {
+            "name": "address",
+            "type": "string",
+            "title": {
+              "en": "Address",
+              "nl": "Adres"
+            }
+          }
+        ]
+      },
+      {
+        "id": "intouch_decrease",
+        "title": {
+          "en": "InTouch speed down button received",
+          "nl": "InTouch zachter-knop ontvangen"
+        },
+        "tokens": [
+          {
+            "name": "address",
+            "type": "string",
+            "title": {
+              "en": "Address",
+              "nl": "Adres"
+            }
+          }
+        ]
+      },
+      {
+        "id": "intouch_unknown",
+        "title": {
+          "en": "Unknown InTouch code received",
+          "nl": "Onbekende InTouch-code ontvangen"
+        },
+        "tokens": [
+          {
+            "name": "code",
+            "type": "string",
+            "title": {
+              "en": "Code",
+              "nl": "Code"
+            }
+          }
+        ]
+      },
       {
         "id": "grease_dirty_true",
         "title": {
