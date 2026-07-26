@@ -34,11 +34,27 @@ class NovyApp extends Homey.App {
   async _startInTouchReceiver() {
     // A button press transmits the frame ~20 times; collapse the burst.
     const DEBOUNCE_MS = 750;
-    const UNIT_TO_CARD = {
-      '11010001': 'intouch_light',
-      '11010011': 'intouch_onoff',
-      '01': 'intouch_increase',
-      '10': 'intouch_decrease',
+
+    // RX often loses the first bit(s) of a frame to start-of-frame detection,
+    // so classify on the button-code SUFFIX and treat the (variable-length)
+    // remainder as the address. Long 8-bit codes first — the light code also
+    // happens to end in '01'.
+    const classify = code => {
+      if (code.length >= 14) {
+        if (code.endsWith('11010011')) return { card: 'intouch_onoff', unitLength: 8 };
+        if (code.endsWith('11010001')) return { card: 'intouch_light', unitLength: 8 };
+        // Salvage frames with leading garbage but an intact tail: the last two
+        // address bits + full button code form a distinctive 10-bit signature.
+        if (code.includes('0111010011')) return { card: 'intouch_onoff', unitLength: 8 };
+        if (code.includes('0111010001')) return { card: 'intouch_light', unitLength: 8 };
+        return null;
+      }
+      // Short frames: the remainder must be a clean alternating address, so a
+      // heavily truncated 8-bit code can't masquerade as a 2-bit one.
+      if (!/^(01)+$/.test(code.slice(0, -2))) return null;
+      if (code.endsWith('01')) return { card: 'intouch_increase', unitLength: 2 };
+      if (code.endsWith('10')) return { card: 'intouch_decrease', unitLength: 2 };
+      return null;
     };
 
     try {
@@ -49,28 +65,50 @@ class NovyApp extends Homey.App {
       return;
     }
 
-    let lastCode = null;
-    let lastAt = 0;
+    // One press = a burst of ~20 repeats, arriving as a mix of complete and
+    // mangled frames — debounce per button, not per exact code. Unrecognised
+    // frames are held back briefly: they are usually mangled repeats of a
+    // press that decodes fine a moment before or after.
+    const UNKNOWN_HOLD_MS = 600;
+    const lastFired = {};
+    let lastClassifiedAt = 0;
+    let unknownTimer = null;
     this._intouchSignal.on('payload', payload => {
       try {
         const code = Array.from(payload).join('');
-        const now = Date.now();
-        if (code === lastCode && now - lastAt < DEBOUNCE_MS) {
-          lastAt = now;
+        const result = classify(code);
+        // Corrupted repeats show up as mostly-zero frames; real InTouch
+        // addresses are alternating (0101...). Log-only, no trigger spam.
+        if (!result && !code.startsWith('0101')) {
+          this.log(`InTouch RX noise: code=${code}`);
           return;
         }
-        lastCode = code;
-        lastAt = now;
+        const now = Date.now();
 
-        const address = code.slice(0, 10);
-        const unit = code.slice(10);
-        const card = UNIT_TO_CARD[unit];
-        this.log(`InTouch RX: code=${code} (address=${address}, unit=${unit}) -> ${card || 'unknown'}`);
-        if (card) {
-          this.homey.flow.getTriggerCard(card).trigger({ address }).catch(this.error);
-        } else {
-          this.homey.flow.getTriggerCard('intouch_unknown').trigger({ code }).catch(this.error);
+        if (result) {
+          lastClassifiedAt = now;
+          if (unknownTimer) {
+            clearTimeout(unknownTimer);
+            unknownTimer = null;
+          }
+          if (lastFired[result.card] && now - lastFired[result.card] < DEBOUNCE_MS) return;
+          lastFired[result.card] = now;
+          const address = code.slice(0, code.length - result.unitLength);
+          this.log(`InTouch RX: code=${code} (address=${address}) -> ${result.card}`);
+          this.homey.flow.getTriggerCard(result.card).trigger({ address }).catch(this.error);
+          return;
         }
+
+        if (unknownTimer) clearTimeout(unknownTimer);
+        unknownTimer = setTimeout(() => {
+          unknownTimer = null;
+          const fireAt = Date.now();
+          if (fireAt - lastClassifiedAt < 2 * DEBOUNCE_MS) return;
+          if (lastFired.intouch_unknown && fireAt - lastFired.intouch_unknown < DEBOUNCE_MS) return;
+          lastFired.intouch_unknown = fireAt;
+          this.log(`InTouch RX: unknown code=${code}`);
+          this.homey.flow.getTriggerCard('intouch_unknown').trigger({ code }).catch(this.error);
+        }, UNKNOWN_HOLD_MS);
       } catch (err) {
         this.error(`InTouch RX handling failed: ${err}`);
       }

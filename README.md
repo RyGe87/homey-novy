@@ -26,6 +26,11 @@ The hood appears as two Homey devices sharing a single BLE connection:
 State is polled every 5 seconds, so changes made with the physical remote show
 up in Homey as well.
 
+**InTouch receiver**: the app also listens for Novy InTouch 433 MHz frames
+(the hood-control buttons on a Novy hob, or the remote) and fires flow
+triggers for the light, on/off, speed up and speed down buttons. This lets
+you route flaky hob buttons through Homey to the hood over rock-solid BLE.
+
 ## Installation (development)
 
 ```bash
