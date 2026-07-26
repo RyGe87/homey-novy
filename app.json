@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -376,6 +376,21 @@
       },
       "connectivity": ["ble"],
       "platforms": ["local"],
+      "settings": [
+        {
+          "id": "skip_run_out",
+          "type": "checkbox",
+          "value": false,
+          "label": {
+            "en": "Turn off immediately (skip run-out)",
+            "nl": "Direct uitschakelen (naloopstand overslaan)"
+          },
+          "hint": {
+            "en": "The hood normally keeps running for 30 minutes after switching off, to clear remaining fumes. With this setting enabled, a detected run-out is cut short and the hood turns off right away.",
+            "nl": "De kap draait na het uitschakelen normaal 30 minuten na om resterende dampen af te voeren. Met deze instelling wordt een gedetecteerde naloop meteen afgebroken en gaat de kap direct uit."
+          }
+        }
+      ],
       "images": {
         "small": "/drivers/hood-fan/assets/images/small.png",
         "large": "/drivers/hood-fan/assets/images/large.png"

@@ -77,7 +77,12 @@ class NovyApp extends Homey.App {
               }
               break;
             case 'intouch_onoff':
-              if (Boolean(s.fanState) === snap.fan && Boolean(s.lightState) === snap.light) {
+              if (hood.skipRunOut && (snap.fan || snap.light)) {
+                // Off-intent with "direct off" enabled: direct off is
+                // idempotent, so skip the heard-it check entirely.
+                action = 'direct off (skip run-out)';
+                await hood.turnAllOff();
+              } else if (Boolean(s.fanState) === snap.fan && Boolean(s.lightState) === snap.light) {
                 action = 'filling gap: power toggle';
                 await hood.pressPower();
               }

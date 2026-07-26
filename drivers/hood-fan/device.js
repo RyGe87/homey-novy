@@ -13,6 +13,8 @@ class HoodFanDevice extends Homey.Device {
     const { id } = this.getData();
     const { address, localName } = this.getStore();
     this.hood = this.homey.app.getHood({ uuid: id, address, localName });
+    this.hood.skipRunOut = Boolean(this.getSetting('skip_run_out'));
+    this._lastRunOutCancel = 0;
 
     this._onState = state => this._syncState(state);
     this._onAvailable = available => {
@@ -55,6 +57,15 @@ class HoodFanDevice extends Homey.Device {
         .catch(this.error);
     }
     if (state.greaseDirty !== undefined) this._lastGreaseDirty = state.greaseDirty;
+
+    // "Direct uitschakelen": cut the hood's native 30-minute run-out short,
+    // whichever path started it (hob button, power command, boost expiry).
+    if (this.hood.skipRunOut && state.stopping && state.fanState
+      && Date.now() - this._lastRunOutCancel > 15000) {
+      this._lastRunOutCancel = Date.now();
+      this.log('Run-out detected — turning hood off immediately (setting)');
+      this.hood.turnAllOff().catch(this.error);
+    }
     set('onoff', state.fanState);
     if (state.fanSpeed !== undefined && state.fanSpeed > 0) {
       set('dim', state.fanSpeed / 100);
@@ -63,6 +74,12 @@ class HoodFanDevice extends Homey.Device {
     set('alarm_grease', state.greaseDirty);
     if (state.fanOperatingMinutes !== undefined) {
       set('measure_fan_hours', Math.round(state.fanOperatingMinutes / 60));
+    }
+  }
+
+  async onSettings({ newSettings, changedKeys }) {
+    if (changedKeys.includes('skip_run_out')) {
+      this.hood.skipRunOut = Boolean(newSettings.skip_run_out);
     }
   }
 
