@@ -1,6 +1,6 @@
 {
   "id": "dev.rymenants.novy",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": ["local"],
@@ -190,6 +190,85 @@
             "type": "device",
             "name": "device",
             "filter": "driver_id=hood-fan"
+          }
+        ]
+      },
+      {
+        "id": "intouch_send",
+        "title": {
+          "en": "Send InTouch button over 433 MHz",
+          "nl": "Zend InTouch-knop via 433 MHz"
+        },
+        "titleFormatted": {
+          "en": "Send InTouch [[button]] with [[code]]",
+          "nl": "Zend InTouch [[button]] met [[code]]"
+        },
+        "hint": {
+          "en": "Transmits a Novy InTouch radio frame, like a remote control would. Use the Homey code to pair the hood to Homey (power-cycle the hood first, then send within 3 minutes).",
+          "nl": "Zendt een Novy InTouch-radioframe uit, zoals een afstandsbediening. Gebruik de Homey-code om de kap aan Homey te koppelen (kap eerst spanningsloos maken, daarna binnen 3 minuten zenden)."
+        },
+        "args": [
+          {
+            "name": "button",
+            "type": "dropdown",
+            "title": {
+              "en": "Button",
+              "nl": "Knop"
+            },
+            "values": [
+              {
+                "id": "light",
+                "label": {
+                  "en": "Light",
+                  "nl": "Licht"
+                }
+              },
+              {
+                "id": "onoff",
+                "label": {
+                  "en": "On/off",
+                  "nl": "Aan/uit"
+                }
+              },
+              {
+                "id": "increase",
+                "label": {
+                  "en": "Speed up",
+                  "nl": "Harder"
+                }
+              },
+              {
+                "id": "decrease",
+                "label": {
+                  "en": "Speed down",
+                  "nl": "Zachter"
+                }
+              }
+            ]
+          },
+          {
+            "name": "code",
+            "type": "dropdown",
+            "title": {
+              "en": "Code",
+              "nl": "Code"
+            },
+            "values": [
+              {
+                "id": "hob",
+                "label": {
+                  "en": "hob code (0101010101)",
+                  "nl": "kookplaatcode (0101010101)"
+                }
+              },
+              {
+                "id": "homey",
+                "label": {
+                  "en": "Homey code",
+                  "nl": "Homey-code"
+                }
+              }
+            ]
           }
         ]
       },

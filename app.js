@@ -3,6 +3,18 @@
 const Homey = require('homey');
 const { NovyHood } = require('./lib/NovyHood');
 
+// InTouch frame = address bits + button code (see PROTOCOL.md / README).
+const HOB_ADDRESS = '0101010101';
+// Homey's own address, used when the hood is paired to Homey instead of the
+// hob/remote. Any 10-bit pattern works — the hood learns it during pairing.
+const HOMEY_ADDRESS = '1001101001';
+const INTOUCH_TX_UNITS = {
+  light: '11010001',
+  onoff: '11010011',
+  increase: '01',
+  decrease: '10',
+};
+
 /**
  * The fan device and the light device are two Homey devices backed by the
  * same physical hood, which only accepts a single BLE connection. This app
@@ -23,9 +35,31 @@ class NovyApp extends Homey.App {
     this.homey.flow.getConditionCard('grease_dirty')
       .registerRunListener(async ({ device }) => Boolean(device.hood.state.greaseDirty));
 
+    this.homey.flow.getActionCard('intouch_send')
+      .registerRunListener(async ({ button, code }) => {
+        const address = code === 'homey' ? HOMEY_ADDRESS : HOB_ADDRESS;
+        await this._sendInTouch(address + INTOUCH_TX_UNITS[button]);
+      });
+
     await this._startInTouchReceiver();
 
     this.log('Novy BLE app started');
+  }
+
+  /** Transmit an InTouch frame, acting as a (replacement) remote control.
+   *  During the hood's 3-minute learning mode (after a power-cycle) the hood
+   *  adopts the address of the first InTouch frame it hears. */
+  async _sendInTouch(bits) {
+    if (!this._intouchSignal) throw new Error('433 MHz signal unavailable');
+    const payload = bits.split('').map(Number);
+    // Ignore our own transmission if the receiver picks it up.
+    this._txQuietUntil = Date.now() + 2000;
+    // A real remote sends a burst of ~20 repeats; send a few bursts for
+    // reliability at range.
+    for (let i = 0; i < 3; i += 1) {
+      await this._intouchSignal.tx(payload);
+    }
+    this.log(`InTouch TX: ${bits}`);
   }
 
   /** Listen for Novy InTouch 433 MHz frames (hob buttons / remote control) and
@@ -75,6 +109,7 @@ class NovyApp extends Homey.App {
     let unknownTimer = null;
     this._intouchSignal.on('payload', payload => {
       try {
+        if (this._txQuietUntil && Date.now() < this._txQuietUntil) return;
         const code = Array.from(payload).join('');
         const result = classify(code);
         // Corrupted repeats show up as mostly-zero frames; real InTouch
