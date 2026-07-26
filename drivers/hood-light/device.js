@@ -5,6 +5,11 @@ const Homey = require('homey');
 class HoodLightDevice extends Homey.Device {
 
   async onInit() {
+    // Devices paired before v0.3.0 lack the operating-hours sensor.
+    if (!this.hasCapability('measure_led_hours')) {
+      await this.addCapability('measure_led_hours').catch(this.error);
+    }
+
     const { id } = this.getData();
     const { address, localName } = this.getStore();
     this.hood = this.homey.app.getHood({ uuid: id, address, localName });
@@ -58,6 +63,9 @@ class HoodLightDevice extends Homey.Device {
     }
     if (state.colortemp !== undefined) {
       set('light_temperature', state.colortemp / 255);
+    }
+    if (state.ledOperatingMinutes !== undefined) {
+      set('measure_led_hours', Math.round(state.ledOperatingMinutes / 60));
     }
   }
 

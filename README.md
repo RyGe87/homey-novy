@@ -15,11 +15,13 @@ The hood appears as two Homey devices sharing a single BLE connection:
 - Recirculation mode toggle
 - Grease filter alarm, with a maintenance action to reset the counter after
   cleaning the filters
+- Fan operating-hours sensor (with insights)
 - Flow cards: power button, boost, run-out mode, grease filter trigger
 
 **Light**
 - On/off and brightness
 - Colour temperature from cool white (6500 K) to warm amber (2700 K)
+- LED operating-hours sensor (with insights)
 
 State is polled every 5 seconds, so changes made with the physical remote show
 up in Homey as well.

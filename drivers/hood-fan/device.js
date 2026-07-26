@@ -5,6 +5,11 @@ const Homey = require('homey');
 class HoodFanDevice extends Homey.Device {
 
   async onInit() {
+    // Devices paired before v0.3.0 lack the operating-hours sensor.
+    if (!this.hasCapability('measure_fan_hours')) {
+      await this.addCapability('measure_fan_hours').catch(this.error);
+    }
+
     const { id } = this.getData();
     const { address, localName } = this.getStore();
     this.hood = this.homey.app.getHood({ uuid: id, address, localName });
@@ -56,6 +61,9 @@ class HoodFanDevice extends Homey.Device {
     }
     set('recirculation', state.recirculate);
     set('alarm_grease', state.greaseDirty);
+    if (state.fanOperatingMinutes !== undefined) {
+      set('measure_fan_hours', Math.round(state.fanOperatingMinutes / 60));
+    }
   }
 
   async onDeleted() {
