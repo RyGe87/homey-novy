@@ -1,0 +1,7 @@
+{
+  "name": "dev.rymenants.novy",
+  "version": "0.1.0",
+  "main": "app.js",
+  "license": "MIT",
+  "description": "Homey app for Novy Cloud / Pureline Pro extractor hoods over BLE"
+}

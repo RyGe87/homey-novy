@@ -1,0 +1,64 @@
+'use strict';
+
+const Homey = require('homey');
+
+class HoodFanDevice extends Homey.Device {
+
+  async onInit() {
+    const { id } = this.getData();
+    const { address, localName } = this.getStore();
+    this.hood = this.homey.app.getHood({ uuid: id, address, localName });
+
+    this._onState = state => this._syncState(state);
+    this._onAvailable = available => {
+      if (available) this.setAvailable().catch(this.error);
+      else this.setUnavailable(this.homey.__('unavailable')).catch(this.error);
+    };
+    this.hood.on('state', this._onState);
+    this.hood.on('available', this._onAvailable);
+    if (!this.hood.connected) {
+      this.setUnavailable(this.homey.__('unavailable')).catch(this.error);
+    }
+
+    this.registerCapabilityListener('onoff', async value => {
+      await this.hood.setFanState(value);
+    });
+
+    this.registerCapabilityListener('dim', async value => {
+      if (value <= 0) await this.hood.setFanState(false);
+      else await this.hood.setFanSpeed(value * 100);
+    });
+
+    this.registerCapabilityListener('recirculation', async value => {
+      await this.hood.setRecirculate(value);
+    });
+
+    this.registerCapabilityListener('button.reset_grease', async () => {
+      await this.hood.resetGrease();
+    });
+  }
+
+  _syncState(state) {
+    const set = (cap, value) => {
+      if (value !== undefined && this.hasCapability(cap)) {
+        this.setCapabilityValue(cap, value).catch(this.error);
+      }
+    };
+    set('onoff', state.fanState);
+    if (state.fanSpeed !== undefined && state.fanSpeed > 0) {
+      set('dim', state.fanSpeed / 100);
+    }
+    set('recirculation', state.recirculate);
+    set('alarm_grease', state.greaseDirty);
+  }
+
+  async onDeleted() {
+    if (this.hood) {
+      this.hood.removeListener('state', this._onState);
+      this.hood.removeListener('available', this._onAvailable);
+      await this.homey.app.releaseHood(this.getData().id);
+    }
+  }
+}
+
+module.exports = HoodFanDevice;

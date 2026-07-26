@@ -1,0 +1,129 @@
+{
+  "id": "dev.rymenants.novy",
+  "version": "0.1.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "platforms": ["local"],
+  "name": {
+    "en": "Novy BLE (Cloud / Pureline Pro)",
+    "nl": "Novy BLE (Cloud / Pureline Pro)"
+  },
+  "description": {
+    "en": "Control your Novy Cloud or Pureline Pro extractor hood over Bluetooth",
+    "nl": "Bedien je Novy Cloud- of Pureline Pro-dampkap via Bluetooth"
+  },
+  "category": ["climate"],
+  "permissions": ["homey:wireless:ble"],
+  "brandColor": "#1c1c1c",
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Geert Rymenants",
+    "email": "rymenants.geert@me.com"
+  },
+  "source": "https://github.com/bwynants/hass-purelinepro",
+  "capabilities": {
+    "recirculation": {
+      "type": "boolean",
+      "title": {
+        "en": "Recirculation",
+        "nl": "Recirculatie"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "insights": false
+    },
+    "alarm_grease": {
+      "type": "boolean",
+      "title": {
+        "en": "Grease filter dirty",
+        "nl": "Vetfilter vuil"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true
+    }
+  },
+  "drivers": [
+    {
+      "id": "hood-fan",
+      "name": {
+        "en": "Novy hood — fan",
+        "nl": "Novy dampkap — ventilator"
+      },
+      "class": "fan",
+      "capabilities": ["onoff", "dim", "recirculation", "alarm_grease", "button.reset_grease"],
+      "capabilitiesOptions": {
+        "dim": {
+          "title": {
+            "en": "Fan speed",
+            "nl": "Ventilatorsnelheid"
+          }
+        },
+        "button.reset_grease": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Reset grease filter counter",
+            "nl": "Vetfilterteller resetten"
+          },
+          "desc": {
+            "en": "Resets the grease filter cleaning reminder after cleaning the filters.",
+            "nl": "Zet de vetfilter-herinnering terug op nul nadat je de filters hebt gereinigd."
+          }
+        }
+      },
+      "connectivity": ["ble"],
+      "platforms": ["local"],
+      "images": {
+        "small": "/drivers/hood-fan/assets/images/small.png",
+        "large": "/drivers/hood-fan/assets/images/large.png"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ]
+    },
+    {
+      "id": "hood-light",
+      "name": {
+        "en": "Novy hood — light",
+        "nl": "Novy dampkap — verlichting"
+      },
+      "class": "light",
+      "capabilities": ["onoff", "dim", "light_temperature"],
+      "connectivity": ["ble"],
+      "platforms": ["local"],
+      "images": {
+        "small": "/drivers/hood-light/assets/images/small.png",
+        "large": "/drivers/hood-light/assets/images/large.png"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ]
+    }
+  ]
+}
