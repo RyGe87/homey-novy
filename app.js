@@ -53,7 +53,9 @@ class NovyApp extends Homey.App {
    *  RF does arrive and rules out double execution by construction. */
   _bridgeInTouch(card, address) {
     if (address !== HOB_ADDRESS) return;
-    const BRIDGE_CHECK_MS = 1800;
+    // The hood acts on RF it hears virtually instantly, so 1s is enough to
+    // tell "heard it" from "missed it" while keeping the fill-in snappy.
+    const BRIDGE_CHECK_MS = 1000;
     const SPEED_STEP = 25;
 
     for (const { hood } of this._hoods.values()) {
